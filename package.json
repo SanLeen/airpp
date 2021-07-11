@@ -1,0 +1,23 @@
+{
+  "name": "airpp",
+  "version": "1.0.0",
+  "description": "Control the media playback of the MAC under the local area network on the web.",
+  "main": "server.js",
+  "files": [
+    "lib",
+    "html"
+  ],
+  "scripts": {
+    "build_lib": "xcrun swiftc -v -o ./lib/mkey ./lib/mkey.swift",
+    "start": "node ./server.js",
+    "debug": "npm run build_lib;npm run start"
+  },
+  "author": {
+    "name": "SanLeen"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SanLeen/airpp.git"
+  },
+  "license": "MIT"
+}

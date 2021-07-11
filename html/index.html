@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>AirPP</title>
+    <meta name="color-scheme" content="light dark" />
+    <meta name="viewport"
+        content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <style>
+        :root {
+            --stage-box-shadow: black 0px 0px 2.4em inset;
+            --stage-background: linear-gradient(rgb(227, 227, 227) 0%, rgb(214, 214, 214) 100%);
+            --controllers-border-color: rgb(185, 185, 185);
+            --controllers-background: rgb(255, 255, 255);
+            --controllers-color: #AFAFAF;
+            --play-box-shadow-color: rgb(191 191 191);
+            --play-box-background: rgb(255, 255, 255);
+            --play-box-border-color: rgb(185, 185, 185);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                --stage-background: linear-gradient(rgb(125, 124, 125) 0%, rgb(30, 30, 30) 100%);
+                --controllers-border-color: rgb(26, 26, 26);
+                --controllers-background: #2A2A2A;
+                --controllers-color: #FFFFFF;
+                --play-box-shadow-color: rgb(50 50 50);
+                --play-box-background: rgb(125, 124, 125);
+                --play-box-border-color: rgb(26, 26, 26);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html {
+            height: 100%;
+            font-family: Montserrat, sans-serif;
+        }
+
+        body {
+            background-color: black;
+            height: 100%;
+        }
+
+        .stage {
+            width: 100%;
+            height: 100%;
+            box-shadow: var(--stage-box-shadow);
+            background: var(--stage-background);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stage>.top {
+            height: 260px;
+            margin: 0.75rem 0.75rem 0px;
+            border: 4px solid black;
+            border-radius: 0.5rem;
+            background-color: white;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stage>.bottom {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controllers {
+            --size: 220px;
+            --templates: 1fr 1.35fr 1fr;
+            --color: var(--controllers-color);
+            --icon-size: 1.2em;
+            width: var(--size);
+            height: var(--size);
+            border-radius: var(--size);
+            border: 1px solid var(--controllers-border-color);
+            background-color: var(--controllers-background);
+            color: var(--color);
+            display: grid;
+            grid-template-columns: var(--templates);
+            grid-template-rows: var(--templates);
+        }
+
+        .controllers>div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .controllers svg {
+            width: var(--icon-size);
+            height: var(--icon-size);
+            fill: var(--color);
+            pointer-events: none;
+        }
+
+        .play {
+            border-radius: 50%;
+            box-shadow: var(--play-box-shadow-color) 0px 1em 3em inset;
+            background-color: var(--play-box-background);
+            border: 1px solid var(--play-box-border-color);
+            transition: filter 50ms;
+        }
+
+        .play:active {
+            filter: brightness(0.9);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stage">
+        <div class="top">
+            <div style="text-align: center;font-weight: bolder;font-size: 2.5em;" onclick="jump2source()">AirPP</div>
+        </div>
+        <div class="bottom">
+            <div class="controllers">
+                <div></div>
+                <div class="volume-up" onclick="control('volume_up')"></div>
+                <div></div>
+
+                <div class="previous" onclick="control('previous')"></div>
+                <div class="play" onclick="control('pause_play')"></div>
+                <div class="next" onclick="control('next')"></div>
+
+                <div></div>
+                <div class="volume-down" onclick="control('volume_down')"></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.onload = function () { // 阻止双击放大 
+            let lastTouchEnd = 0;
+            document.addEventListener('touchstart', function (event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            });
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                } lastTouchEnd = now;
+            }, false);
+            // 阻止双指放大 
+            document.addEventListener('gesturestart', function (event) { event.preventDefault(); });
+        }
+        document.body.addEventListener('touchmove', function (e) {
+            e.preventDefault(); //阻止默认的处理方式(阻止下拉滑动的效果)
+        }, { passive: false });
+    </script>
+    <script>
+        const httpGet = url => {
+            const getXMLHttpRequest = (method, url) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open(method, url, true);
+                return xhr;
+            }
+            const xhr = getXMLHttpRequest('get', url);
+            xhr.send();
+            return new Promise((resolve, reject) => {
+                xhr.onload = () => (xhr.status === 200) ? resolve(xhr.response) : reject(xhr.response);
+            });
+        };
+    </script>
+    <script>
+        const fillIcons = () => {
+            const controllersEle = document.getElementsByClassName('controllers')[0];
+            const fillColor = getComputedStyle(controllersEle).color;
+            [
+                ['previous', './icons/play-skip-back-sharp.svg'],
+                ['next', './icons/play-skip-forward-sharp.svg'],
+                ['volume-up', './icons/add-sharp.svg'],
+                ['volume-down', './icons/remove-sharp.svg'],
+            ].forEach(a => {
+                const [c, f] = a;
+                httpGet(f).then(r => {
+                    const fr = r.replaceAll('stroke:#000;', `stroke:${fillColor};`);
+                    document.getElementsByClassName(c)[0].innerHTML = fr;
+                });
+            });
+        }
+        fillIcons();
+    </script>
+    <script>
+        const control = code => {
+            httpGet('./api/control?code=' + code);
+        };
+        const jump2source = () => {
+            window.open('https://github.com/SanLeen/airpp', 'target', '');
+        }
+    </script>
+</body>
+
+</html>

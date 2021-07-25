@@ -72,6 +72,13 @@
             justify-content: center;
         }
 
+        .stage>.top>.logo {
+            text-align: center;
+            font-weight: bolder;
+            font-size: 2.5em;
+            transition: transform 200ms;
+        }
+
         .stage>.bottom {
             flex: 1;
             display: flex;
@@ -100,6 +107,7 @@
             align-items: center;
             justify-content: center;
             -webkit-tap-highlight-color: transparent;
+            transition: transform 100ms;
         }
 
         .controllers svg {
@@ -109,7 +117,7 @@
             pointer-events: none;
         }
 
-        .play {
+        [control="pause_play"] {
             border-radius: 50%;
             box-shadow: var(--play-box-shadow-color) 0px 1em 3em inset;
             background-color: var(--play-box-background);
@@ -117,7 +125,7 @@
             transition: filter 50ms;
         }
 
-        .play:active {
+        [control="pause_play"]:active {
             filter: brightness(0.9);
         }
     </style>
@@ -126,20 +134,20 @@
 <body>
     <div class="stage">
         <div class="top">
-            <div style="text-align: center;font-weight: bolder;font-size: 2.5em;" onclick="jump2source()">AirPP</div>
+            <div class="logo" onclick="jump2source()">AirPP</div>
         </div>
         <div class="bottom">
             <div class="controllers">
                 <div></div>
-                <div class="volume-up" onclick="control('volume_up')"></div>
+                <div control="volume_up"></div>
                 <div></div>
 
-                <div class="previous" onclick="control('previous')"></div>
-                <div class="play" onclick="control('pause_play')"></div>
-                <div class="next" onclick="control('next')"></div>
+                <div control="previous"></div>
+                <div control="pause_play"></div>
+                <div control="next"></div>
 
                 <div></div>
-                <div class="volume-down" onclick="control('volume_down')"></div>
+                <div control="volume_down"></div>
                 <div></div>
             </div>
         </div>
@@ -180,30 +188,58 @@
         };
     </script>
     <script>
-        const fillIcons = () => {
-            const controllersEle = document.getElementsByClassName('controllers')[0];
+        const controllersEle = document.getElementsByClassName('controllers')[0];
+        const logoEle = document.getElementsByClassName('logo')[0];
+
+        const fillIcon = async ({ ele, icon }) => {
+            if (icon === undefined) {
+                return;
+            }
             const fillColor = getComputedStyle(controllersEle).color;
-            [
-                ['previous', './icons/play-skip-back-sharp.svg'],
-                ['next', './icons/play-skip-forward-sharp.svg'],
-                ['volume-up', './icons/add-sharp.svg'],
-                ['volume-down', './icons/remove-sharp.svg'],
-            ].forEach(a => {
-                const [c, f] = a;
-                httpGet(f).then(r => {
-                    const fr = r.replaceAll('stroke:#000;', `stroke:${fillColor};`);
-                    document.getElementsByClassName(c)[0].innerHTML = fr;
-                });
-            });
+            const res = await httpGet(icon);
+            const fRes = res.replaceAll('stroke:#000;', `stroke:${fillColor};`);
+            ele.innerHTML = fRes;
         }
-        fillIcons();
-    </script>
-    <script>
-        const control = code => {
-            httpGet('./api/control?code=' + code);
+        const requestControl = code => httpGet('./api/control?code=' + code);
+        const jump2source = () => window.open('https://github.com/SanLeen/airpp', 'target', '');
+        const handleTouch = ({ event, scale = 0.85, logoTransform }) => {
+            if (event.type === 'touchstart') {
+                logoEle.style.transform = logoTransform;
+                event.target.style.transform = 'scale(' + scale + ')';
+            } else if (event.type === 'touchend') {
+                logoEle.style.transform = 'none';
+                event.target.style.transform = 'none';
+            }
+        }
+
+        const controlsConfigMap = {
+            'volume_up': {
+                icon: './icons/add-sharp.svg',
+                touchHandler: e => handleTouch({ event: e, logoTransform: 'scale(1.2)' }),
+            },
+            'previous': {
+                icon: './icons/play-skip-back-sharp.svg',
+                touchHandler: e => handleTouch({ event: e, logoTransform: 'translateX(-10px)' }),
+            },
+            'pause_play': {
+                touchHandler: e => handleTouch({ event: e, scale: 0.95, logoTransform: 'rotateY(180deg)' })
+            },
+            'next': {
+                icon: './icons/play-skip-forward-sharp.svg',
+                touchHandler: e => handleTouch({ event: e, logoTransform: 'translateX(10px)' })
+            },
+            'volume_down': {
+                icon: './icons/remove-sharp.svg',
+                touchHandler: e => handleTouch({ event: e, logoTransform: 'scale(0.8)' })
+            },
         };
-        const jump2source = () => {
-            window.open('https://github.com/SanLeen/airpp', 'target', '');
+        for (const ele of document.querySelectorAll('[control]')) {
+            const controlCode = ele.attributes.control.value;
+            const { touchHandler, icon } = controlsConfigMap[controlCode];
+            fillIcon({ ele, icon });
+            ele.addEventListener('click', () => requestControl(controlCode));
+            ele.addEventListener('touchstart', touchHandler);
+            ele.addEventListener('touchend', touchHandler);
         }
     </script>
 </body>

@@ -1,6 +1,6 @@
 {
   "name": "airpp",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Control the media playback of the MAC under the local area network on the web.",
   "main": "server.js",
   "files": [

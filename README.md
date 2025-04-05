@@ -1,5 +1,5 @@
 # AirPP
-> Control the media playback of the MAC under the local area network on the web.
+> Control the media playback of the PC/MAC under the local area network on the web.
 
 ![](./reviews/server.png)
 
@@ -9,14 +9,14 @@
 
 |  name   | version  |
 |  ----  | ----  |
-| [node](https://nodejs.org/zh-cn/download)  | v12.18.2 |
-| [xcode](https://apps.apple.com/cn/app/xcode/id497799835) `dev only`  | v12.5.1 |
+| [node](https://nodejs.org/zh-cn/download)  | v12.18.2+ |
+| [xcode](https://apps.apple.com/cn/app/xcode/id497799835) `MAC dev only`  | v12.5.1+ |
 
 ## Steps
 
-### build lib `first time only`
+### build darwin lib `first time only for darwin`
 ```shell
-npm run build_lib
+npm run build_darwin_lib
 ```
 
 ### run server

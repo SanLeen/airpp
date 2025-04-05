@@ -6,11 +6,38 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
-const childProcess = require('child_process');
+const { childProcess, spawn } = require('child_process');
 
-const execMediaKeyCode = code => {
-    console.log(`[${new Date().toLocaleString()}] ${code}`);
-    childProcess.exec(`${path.resolve('./lib/mkey')} ${code}`);
+/** @type {{exec(code:string):void}} */
+let nativeHandler;
+
+switch (process.platform) {
+    case 'win32':
+        const ps1 = spawn('powershell', ['-ExecutionPolicy', 'Bypass', '-File', path.resolve('./lib/windows/drive.ps1')]);
+        ps1.stderr.on('error', data => console.error(`native error: ${data}`));
+        ps1.on('close', code => console.log(`native close: ${code}`));
+        nativeHandler = {
+            exec(code) {
+                console.log(`[${new Date().toLocaleString()}] ${code}`);
+                ps1.stdin.write(`${code}\n`);
+            }
+        }
+        break;
+    case 'darwin':
+        nativeHandler = {
+            exec(code) {
+                console.log(`[${new Date().toLocaleString()}] ${code}`);
+                childProcess.exec(`${path.resolve('./lib/darwin/mkey')} ${code}`);
+            }
+        }
+        break;
+    default:
+        nativeHandler = {
+            exec() {
+                console.warn(`unsupported platform`);
+            }
+        }
+        break;
 }
 
 let port = 8098;
@@ -23,7 +50,7 @@ const server = http.createServer((request, response) => {
         const body = { msg: undefined };
         if (url.searchParams.has('code')) {
             const code = url.searchParams.get('code');
-            execMediaKeyCode(code);
+            nativeHandler.exec(code);
             response.writeHead(200, headers);
             body.msg = '🤖️' + url.searchParams.get('code');
         } else {
@@ -61,15 +88,14 @@ const server = http.createServer((request, response) => {
 }).listen(port);
 
 let protocol = 'http://';
-let host = '127.0.0.1';
-const netInfoList = os.networkInterfaces();
-Object.keys(netInfoList).forEach(dev => netInfoList[dev].forEach(details => {
-    if (details.family === 'IPv4') {
-        host = details.address;
-    }
-}));
-const url = `${protocol}${host}:${server.address().port}`;
-
 console.log(`🎉AirPP running at:`);
-console.log(url);
-childProcess.exec(`echo "${url}" | pbcopy`); // copy url to clipboard
+const netInfoList = os.networkInterfaces();
+for (const netInfoArray of Object.values(netInfoList)) {
+    for (const info of netInfoArray) {
+        if (info.internal) continue;
+        if (info.family === 'IPv4') {
+            const url = `${protocol}${info.address}:${server.address().port}`;
+            console.log(url);
+        }
+    }
+}

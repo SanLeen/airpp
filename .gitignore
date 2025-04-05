@@ -3,5 +3,4 @@
 
 node_modules/
 
-/lib/*
-!/lib/mkey.swift
+/lib/darwin/mkey

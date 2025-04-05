@@ -8,7 +8,7 @@
     "html"
   ],
   "scripts": {
-    "build_lib": "xcrun swiftc -v -o ./lib/mkey ./lib/mkey.swift",
+    "build_darwin_lib": "xcrun swiftc -v -o ./lib/darwin/mkey ./lib/darwin/mkey.swift",
     "start": "node ./server.js",
     "debug": "npm run build_lib;npm run start"
   },

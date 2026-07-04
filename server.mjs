@@ -40,7 +40,7 @@ switch (process.platform) {
     break;
 }
 
-let port = 8098;
+let port = 8819;
 
 const server = http.createServer((request, response) => {
   const pathname = request.url;

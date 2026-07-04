@@ -24,7 +24,7 @@ npm run build_darwin_lib
 npm run start
 ```
 
-### open `http://x.x.x.x:8098` in browser
+### open `http://x.x.x.x:8819` in browser
 
 ## References
 

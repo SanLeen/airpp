@@ -2,14 +2,14 @@
   "name": "airpp",
   "version": "1.2.0",
   "description": "Control the media playback of the MAC under the local area network on the web.",
-  "main": "server.js",
+  "main": "server.mjs",
   "files": [
     "lib",
     "html"
   ],
   "scripts": {
     "build_darwin_lib": "xcrun swiftc -v -o ./lib/darwin/mkey ./lib/darwin/mkey.swift",
-    "start": "node ./server.js",
+    "start": "node ./server.mjs",
     "debug": "npm run build_lib;npm run start"
   },
   "author": {
